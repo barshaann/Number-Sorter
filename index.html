@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Extractor & Sorter</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bgDark: '#0d1117',
+                        bgPanel: '#161b22',
+                        bgCard: '#21262d',
+                        bgBorder: '#30363d',
+                        textMain: '#e6edf3',
+                        textMuted: '#7d8590',
+                        accent: '#7c3aed',
+                        accentHover: '#6d28d9',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#3b82f6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-bgDark text-textMain font-sans md:h-screen flex flex-col md:flex-row md:overflow-hidden overflow-auto">
+    
+    <!-- LEFT PANEL -->
+    <div class="w-full md:w-1/3 bg-bgPanel md:h-full flex-shrink-0 md:overflow-y-auto p-4 md:p-6 border-b md:border-b-0 md:border-r border-bgBorder flex flex-col gap-5 md:gap-6">
+        
+        <!-- Header -->
+        <div>
+            <h1 class="text-2xl font-bold flex items-center gap-2 text-textMain">
+                <i class="fa-solid fa-chart-bar text-accent"></i> Number Extractor
+            </h1>
+            <p class="text-sm text-textMuted mt-1">Python Engine Powered - Fast & Accurate</p>
+        </div>
+
+        <!-- Mode Selection -->
+        <div class="bg-bgCard border border-bgBorder rounded-xl p-4">
+            <h2 class="text-xs font-bold text-textMuted mb-3 uppercase tracking-wider"><i class="fa-solid fa-gear"></i> Operation Mode</h2>
+            <div class="border-b border-bgBorder mb-3"></div>
+            
+            <div class="flex flex-col gap-3">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="radio" name="mode" value="Newly added numbers" class="form-radio text-accent focus:ring-accent h-5 w-5 bg-bgDark border-bgBorder" checked onchange="toggleUI()">
+                    <span class="text-sm font-semibold group-hover:text-accent transition">Newly added numbers</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="radio" name="mode" value="Extract numbers from the file" class="form-radio text-accent focus:ring-accent h-5 w-5 bg-bgDark border-bgBorder" onchange="toggleUI()">
+                    <span class="text-sm font-semibold group-hover:text-accent transition">Extract numbers from the file</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="radio" name="mode" value="Check Availability of Numbers" class="form-radio text-accent focus:ring-accent h-5 w-5 bg-bgDark border-bgBorder" onchange="toggleUI()">
+                    <span class="text-sm font-semibold group-hover:text-accent transition">Check Availability of Numbers</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- File 1 Upload -->
+        <div id="file1-card" class="bg-bgCard border border-bgBorder rounded-xl p-4">
+            <h2 id="file1-title" class="text-xs font-bold text-textMuted mb-3 uppercase tracking-wider"><i class="fa-solid fa-folder"></i> Old File</h2>
+            <div class="border-b border-bgBorder mb-3"></div>
+            <div class="flex items-center justify-between bg-bgDark border border-bgBorder rounded-lg p-2">
+                <span id="file1-name" class="text-sm text-textMuted truncate px-2">No file selected...</span>
+                <label class="bg-accent hover:bg-accentHover text-white text-sm font-bold py-2 px-4 rounded-lg cursor-pointer transition">
+                    Browse
+                    <input type="file" id="file1-input" class="hidden" accept=".txt,.xlsx,.xls,.pdf" onchange="handleFileUpload(event, 'old')">
+                </label>
+            </div>
+        </div>
+
+        <!-- File 2 Upload -->
+        <div id="file2-card" class="bg-bgCard border border-bgBorder rounded-xl p-4">
+            <h2 id="file2-title" class="text-xs font-bold text-textMuted mb-3 uppercase tracking-wider"><i class="fa-solid fa-folder-open"></i> New File</h2>
+            <div class="border-b border-bgBorder mb-3"></div>
+            <div class="flex items-center justify-between bg-bgDark border border-bgBorder rounded-lg p-2">
+                <span id="file2-name" class="text-sm text-textMuted truncate px-2">No file selected...</span>
+                <label class="bg-accent hover:bg-accentHover text-white text-sm font-bold py-2 px-4 rounded-lg cursor-pointer transition">
+                    Browse
+                    <input type="file" id="file2-input" class="hidden" accept=".txt,.xlsx,.xls,.pdf" onchange="handleFileUpload(event, 'new')">
+                </label>
+            </div>
+        </div>
+
+        <!-- Column Selection -->
+        <div id="col-card" class="bg-bgCard border border-bgBorder rounded-xl p-4">
+            <h2 class="text-xs font-bold text-textMuted mb-3 uppercase tracking-wider"><i class="fa-solid fa-sliders"></i> Column Selection</h2>
+            <div class="border-b border-bgBorder mb-3"></div>
+            
+            <div id="col1-container" class="mb-4">
+                <label id="col1-title" class="block text-sm mb-2 text-textMain">Old File Column:</label>
+                <select id="col1-select" class="w-full bg-bgBorder text-textMain text-sm rounded-lg p-2.5 border-none outline-none focus:ring-2 focus:ring-accent" disabled>
+                    <option>--</option>
+                </select>
+            </div>
+            
+            <div id="col2-container">
+                <label id="col2-title" class="block text-sm mb-2 text-textMain">New File Column:</label>
+                <select id="col2-select" class="w-full bg-bgBorder text-textMain text-sm rounded-lg p-2.5 border-none outline-none focus:ring-2 focus:ring-accent" disabled>
+                    <option>--</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="process-btn" onclick="processFiles()" class="w-full bg-success hover:bg-[#059669] text-white font-bold py-4 rounded-xl shadow-lg transition mt-auto transform hover:-translate-y-1">
+            🚀 PROCESS FILES
+        </button>
+
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="w-full md:w-2/3 md:h-full p-4 md:p-6 flex flex-col min-h-[600px] md:min-h-0">
+        <div class="bg-bgPanel rounded-xl w-full h-full border border-bgBorder flex flex-col overflow-hidden relative">
+            
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="absolute inset-0 bg-bgDark/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+                <i class="fa-solid fa-circle-notch fa-spin text-accent text-5xl mb-4"></i>
+                <p id="loading-text" class="text-lg font-bold animate-pulse mt-4">Processing Numbers with Python...</p>
+            </div>
+
+            <!-- Metrics -->
+            <div class="grid grid-cols-3 gap-2 md:gap-4 p-4 md:p-6 shrink-0">
+                <div class="bg-bgCard border border-bgBorder rounded-xl p-3 md:p-4 text-center flex flex-col justify-center">
+                    <p id="metric1-title" class="text-[10px] md:text-xs text-textMuted mb-1 md:mb-2">File 1 Count</p>
+                    <p id="metric1-val" class="text-lg md:text-2xl font-bold text-textMain">0</p>
+                </div>
+                <div class="bg-bgCard border border-bgBorder rounded-xl p-3 md:p-4 text-center flex flex-col justify-center">
+                    <p class="text-[10px] md:text-xs text-textMuted mb-1 md:mb-2">File 2 Count</p>
+                    <p id="metric2-val" class="text-lg md:text-2xl font-bold text-textMain">0</p>
+                </div>
+                <div class="bg-bgCard border border-accent shadow-[0_0_15px_rgba(124,58,237,0.2)] rounded-xl p-3 md:p-4 text-center flex flex-col justify-center">
+                    <p class="text-[10px] md:text-xs text-textMuted mb-1 md:mb-2">Available Count</p>
+                    <p id="metric3-val" class="text-lg md:text-2xl font-bold text-accent">0</p>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="px-4 md:px-6 flex gap-2 border-b border-bgBorder shrink-0 overflow-x-auto">
+                <button id="tab-avail" onclick="switchTab('avail')" class="px-4 md:px-6 py-3 text-xs md:text-sm font-bold border-b-2 border-accent text-textMain transition whitespace-nowrap">Available Results</button>
+                <button id="tab-missing" onclick="switchTab('missing')" class="px-4 md:px-6 py-3 text-xs md:text-sm font-bold border-b-2 border-transparent text-textMuted hover:text-textMain transition whitespace-nowrap hidden">Missing Numbers</button>
+            </div>
+
+            <!-- Textboxes -->
+            <div class="flex-1 p-4 md:p-6 overflow-hidden min-h-[400px] md:min-h-[200px] flex flex-col">
+                <textarea id="txt-avail" class="w-full flex-1 bg-bgDark border border-bgBorder rounded-xl p-3 md:p-4 font-mono text-xs md:text-sm text-textMain resize-none focus:outline-none focus:border-accent transition" readonly></textarea>
+                <textarea id="txt-missing" class="w-full flex-1 bg-bgDark border border-bgBorder rounded-xl p-3 md:p-4 font-mono text-xs md:text-sm text-danger resize-none focus:outline-none focus:border-danger transition hidden" readonly></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="p-4 md:p-6 shrink-0">
+                <div class="grid grid-cols-2 md:flex md:flex-row gap-2 md:gap-3 mb-4">
+                    <button onclick="copyToClipboard()" class="flex-1 bg-info hover:bg-blue-600 text-white font-bold py-2.5 md:py-3 rounded-xl transition text-xs md:text-sm">
+                        <i class="fa-solid fa-copy mr-1 md:mr-2"></i> Copy
+                    </button>
+                    <button onclick="saveTXT()" class="flex-1 bg-warning hover:bg-amber-600 text-white font-bold py-2.5 md:py-3 rounded-xl transition text-xs md:text-sm">
+                        <i class="fa-solid fa-file-lines mr-1 md:mr-2"></i> TXT
+                    </button>
+                    <button onclick="saveExcel()" class="flex-1 bg-success hover:bg-emerald-600 text-white font-bold py-2.5 md:py-3 rounded-xl transition text-xs md:text-sm">
+                        <i class="fa-solid fa-file-excel mr-1 md:mr-2"></i> Excel
+                    </button>
+                    <button onclick="savePDF()" class="flex-1 bg-danger hover:bg-red-600 text-white font-bold py-2.5 md:py-3 rounded-xl transition text-xs md:text-sm">
+                        <i class="fa-solid fa-file-pdf mr-1 md:mr-2"></i> PDF
+                    </button>
+                </div>
+                
+                <button id="verify-btn" onclick="verifyAgainstMaster()" class="w-full bg-[#8b5cf6] hover:bg-accent text-white font-bold py-3 md:py-4 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm" disabled>
+                    <i class="fa-solid fa-magnifying-glass mr-1 md:mr-2"></i> Verify Extracted Results
+                </button>
+                <input type="file" id="master-input" class="hidden" accept=".txt,.xlsx,.xls,.pdf" onchange="handleMasterUpload(event)">
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden opacity-0 transition-opacity">
+        <div class="bg-bgPanel border border-bgBorder rounded-2xl p-6 max-w-sm w-full transform scale-95 transition-transform shadow-2xl">
+            <h3 id="alert-title" class="text-xl font-bold mb-2">Message</h3>
+            <p id="alert-msg" class="text-sm text-textMuted mb-6">Details here</p>
+            <button onclick="closeAlert()" class="w-full bg-accent hover:bg-accentHover text-white font-bold py-3 rounded-xl transition">OK</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
