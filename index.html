@@ -212,13 +212,13 @@
                     <button onclick="savePDF()" class="flex-1 glass-card hover:bg-white/10 text-danger font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2 border-danger/30 hover:border-danger/50"><i class="fa-solid fa-file-pdf"></i> PDF</button>
                 </div>
                 
-                <div class="flex gap-3">
-                    <button id="verify-btn" onclick="verifyAgainstMaster()" disabled class="flex-[2] glass-card bg-accent/20 hover:bg-accent/40 disabled:opacity-30 border-accent/50 text-white font-bold py-4 rounded-xl transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-shield-halved"></i> Verify Results against Master
+                <div class="flex flex-col md:flex-row gap-3">
+                    <button id="verify-btn" onclick="verifyAgainstMaster()" disabled class="flex-[2] glass-card bg-accent/20 hover:bg-accent/40 disabled:opacity-30 border-accent/50 text-white font-bold py-4 px-4 rounded-xl transition flex items-center justify-center gap-2 text-center break-words">
+                        <i class="fa-solid fa-shield-halved shrink-0"></i> <span>Verify Results against Master</span>
                     </button>
                     
-                    <button id="split-btn" onclick="openSplitModal()" disabled class="flex-1 glass-card hover:bg-white/10 disabled:opacity-30 text-textMain font-bold py-4 rounded-xl transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-layer-group"></i> Split List
+                    <button id="split-btn" onclick="openSplitModal()" disabled class="flex-1 glass-card hover:bg-white/10 disabled:opacity-30 text-textMain font-bold py-4 px-4 rounded-xl transition flex items-center justify-center gap-2 text-center break-words">
+                        <i class="fa-solid fa-layer-group shrink-0"></i> <span>Split List</span>
                     </button>
                 </div>
                 
