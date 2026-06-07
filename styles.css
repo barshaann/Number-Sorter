@@ -1,24 +1,81 @@
-/* Custom Scrollbar for Dark Theme */
+:root {
+    --bg-dark: #020617; /* Deep black slate */
+    --bg-dark-grad: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+    --bg-panel: rgba(15, 23, 42, 0.6);
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --bg-input: rgba(2, 6, 23, 0.8); /* Deep black glass for inputs */
+    --bg-border: rgba(255, 255, 255, 0.15);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --shadow-color: rgba(0, 0, 0, 0.8);
+}
+
+.light-mode {
+    --bg-dark: #f8fafc;
+    --bg-dark-grad: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+    --bg-panel: rgba(255, 255, 255, 0.6);
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --bg-input: rgba(255, 255, 255, 0.9);
+    --bg-border: rgba(255, 255, 255, 0.6);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --shadow-color: rgba(100, 116, 139, 0.15);
+}
+
+body {
+    background: var(--bg-dark-grad);
+    background-attachment: fixed;
+    color: var(--text-main);
+    transition: background 0.7s ease-in-out, color 0.7s ease-in-out;
+}
+
+.glass-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--bg-border);
+    box-shadow: 0 15px 35px var(--shadow-color);
+    transition: background 0.7s ease-in-out, border-color 0.7s ease-in-out, box-shadow 0.7s ease-in-out;
+}
+
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--bg-border);
+    box-shadow: 0 10px 25px var(--shadow-color);
+    transition: background 0.7s ease-in-out, border-color 0.7s ease-in-out, box-shadow 0.7s ease-in-out, transform 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+}
+
+.glass-input {
+    background: var(--bg-input);
+    border: 1px solid var(--bg-border);
+    color: var(--text-main);
+    transition: all 0.4s ease;
+}
+
+.glass-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3);
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
-
 ::-webkit-scrollbar-track {
-    background: #0d1117;
+    background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-    background: #30363d;
+    background: var(--bg-border);
     border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-    background: #7d8590;
-}
-
-/* Hide scrollbar for standard elements unless hovered */
-.overflow-y-auto {
-    scrollbar-width: thin;
-    scrollbar-color: #30363d #0d1117;
+    background: var(--text-muted);
 }

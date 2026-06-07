@@ -9,6 +9,29 @@ if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
+// ─── Theme Toggling ──────────────────────────────────────────────────────────
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    
+    const icon = document.getElementById('theme-icon');
+    
+    icon.style.transform = 'rotate(360deg)';
+    setTimeout(() => {
+        icon.style.transition = 'none';
+        icon.style.transform = 'rotate(0deg)';
+        setTimeout(() => icon.style.transition = '', 50);
+    }, 700);
+    
+    if (isLight) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+    } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+    }
+}
+
 // ─── UI State ────────────────────────────────────────────────────────────────
 function toggleUI() {
     const mode = document.querySelector('input[name="mode"]:checked').value;
@@ -16,28 +39,62 @@ function toggleUI() {
     const f1Card        = document.getElementById('file1-card');
     const col1Container = document.getElementById('col1-container');
     const f1Title       = document.getElementById('file1-title');
-    const f2Title       = document.getElementById('file2-title');
     const col1Title     = document.getElementById('col1-title');
+
+    const f2Card        = document.getElementById('file2-card');
+    const col2Container = document.getElementById('col2-container');
+    const f2Title       = document.getElementById('file2-title');
     const col2Title     = document.getElementById('col2-title');
+
     const metric1Title  = document.getElementById('metric1-title');
+    const metric2Title  = document.getElementById('metric2-title');
+    const metric1Card   = document.getElementById('metric1-card');
+    const metricsGrid   = document.getElementById('metrics-grid');
 
-    f1Title.innerHTML    = '<i class="fa-solid fa-folder"></i> Old File';
-    f2Title.innerHTML    = '<i class="fa-solid fa-folder-open"></i> New File';
-    col1Title.innerText  = 'Old File Column:';
-    col2Title.innerText  = 'New File Column:';
+    // Reset textual content
+    f1Title.innerHTML    = '<i class="fa-regular fa-folder-open"></i> Old File';
+    f2Title.innerHTML    = '<i class="fa-regular fa-folder-open"></i> New File';
+    col1Title.innerText  = 'Old File Column';
+    col2Title.innerText  = 'New File Column';
     metric1Title.innerText = 'File 1 Count';
-    f1Card.style.display        = 'block';
-    col1Container.style.display = 'block';
+    if(metric2Title) metric2Title.innerText = 'File 2 Count';
+    
+    // Reset Visibility smoothly
+    f1Card.classList.remove('hidden');
+    if(metric1Card) metric1Card.classList.remove('hidden');
+    if(metricsGrid) {
+        metricsGrid.classList.remove('grid-cols-2');
+        metricsGrid.classList.add('grid-cols-3');
+    }
+    
+    // Hide column dropdowns by default (only show after file is uploaded)
+    col1Container.classList.remove('max-h-0', 'opacity-0'); // reset
+    col2Container.classList.remove('max-h-0', 'opacity-0'); // reset
+    col1Container.style.maxHeight = '0px';
+    col1Container.style.opacity = '0';
+    col2Container.style.maxHeight = '0px';
+    col2Container.style.opacity = '0';
+    
+    const f2Input = document.getElementById('file2-input');
+    f2Input.removeAttribute('multiple');
 
-    if (mode === 'Extract numbers from the file') {
-        f1Card.style.display        = 'none';
-        col1Container.style.display = 'none';
+        if (mode === 'Extract numbers from the file') {
+        f1Card.classList.add('hidden');
+        if(metric1Card) metric1Card.classList.add('hidden');
+        if(metricsGrid) {
+            metricsGrid.classList.remove('grid-cols-3');
+            metricsGrid.classList.add('grid-cols-2');
+        }
         document.getElementById('metric1-val').innerText = '-';
+        if(metric2Title) metric2Title.innerText = 'File Count';
+        
+        f2Input.setAttribute('multiple', 'true');
+        f2Title.innerHTML = '<i class="fa-solid fa-layer-group"></i> Select Files (Multi-Select)';
     } else if (mode === 'Check Availability of Numbers') {
-        f1Title.innerHTML      = '<i class="fa-solid fa-folder"></i> Sorted numbers';
-        f2Title.innerHTML      = '<i class="fa-solid fa-folder-open"></i> All numbers';
-        col1Title.innerText    = 'Sorted Column:';
-        col2Title.innerText    = 'All numbers Column:';
+        f1Title.innerHTML      = '<i class="fa-solid fa-check-double"></i> Sorted numbers';
+        f2Title.innerHTML      = '<i class="fa-solid fa-database"></i> All numbers';
+        col1Title.innerText    = 'Sorted Column';
+        col2Title.innerText    = 'All Numbers Column';
         metric1Title.innerText = 'Sorted List Count';
     }
 }
@@ -108,14 +165,29 @@ async function extractListFromFile(file, colId) {
 
 // ─── File Upload Handlers ────────────────────────────────────────────────────
 async function handleFileUpload(event, type) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     const isOld  = type === 'old';
-    if (isOld) file1Obj = file;
-    else file2Obj = file;
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    
+    let file;
+    if (isOld) {
+        file1Obj = files[0];
+        file = file1Obj;
+        document.getElementById('file1-name').innerText = file.name;
+    } else {
+        if (mode === 'Extract numbers from the file') {
+            file2Obj = Array.from(files);
+            file = files[0]; // Use first file to detect columns
+            document.getElementById('file2-name').innerText = files.length > 1 ? `${files.length} files selected` : file.name;
+        } else {
+            file2Obj = files[0];
+            file = file2Obj;
+            document.getElementById('file2-name').innerText = file.name;
+        }
+    }
 
-    document.getElementById(`file${isOld ? 1 : 2}-name`).innerText = file.name;
     const selectEl = document.getElementById(`col${isOld ? 1 : 2}-select`);
     const filename = file.name.toLowerCase();
 
@@ -124,9 +196,17 @@ async function handleFileUpload(event, type) {
     if (filename.endsWith('.txt')) {
         selectEl.innerHTML = '<option value="TXT">Text File (All Lines)</option>';
         selectEl.disabled = false;
+        const container = document.getElementById(`col${isOld ? 1 : 2}-container`);
+        container.classList.remove('max-h-0', 'opacity-0');
+        container.style.maxHeight = '300px';
+        container.style.opacity = '1';
     } else if (filename.endsWith('.pdf')) {
         selectEl.innerHTML = '<option value="PDF_AUTO">PDF Auto-Extract</option>';
         selectEl.disabled = false;
+        const container = document.getElementById(`col${isOld ? 1 : 2}-container`);
+        container.classList.remove('max-h-0', 'opacity-0');
+        container.style.maxHeight = '300px';
+        container.style.opacity = '1';
     } else if (filename.endsWith('.xlsx') || filename.endsWith('.xls')) {
         showLoading(true, "Reading Excel Columns...");
         try {
@@ -174,6 +254,13 @@ async function handleFileUpload(event, type) {
             } else {
                 selectEl.disabled = true;
             }
+            
+            // Animate contextual dropdown open using inline styles for bulletproof CDN support
+            const container = document.getElementById(`col${isOld ? 1 : 2}-container`);
+            container.classList.remove('max-h-0', 'opacity-0');
+            container.style.maxHeight = '300px';
+            container.style.opacity = '1';
+            
         } catch (err) {
             showAlert('Error', 'Failed to read Excel file: ' + err.message);
         }
@@ -203,7 +290,17 @@ async function processFiles() {
 
     try {
         const col2Id = document.getElementById('col2-select').value;
-        const newCleaned = await extractListFromFile(file2Obj, col2Id);
+        let newCleaned = [];
+        
+        if (mode === 'Extract numbers from the file' && Array.isArray(file2Obj)) {
+            for (let f of file2Obj) {
+                const arr = await extractListFromFile(f, col2Id);
+                newCleaned.push(...arr);
+            }
+        } else {
+            const f2 = Array.isArray(file2Obj) ? file2Obj[0] : file2Obj;
+            newCleaned = await extractListFromFile(f2, col2Id);
+        }
         
         let oldCleaned = [];
         if (mode !== 'Extract numbers from the file') {
@@ -248,6 +345,20 @@ async function processFiles() {
 
     btn.disabled = false;
     showLoading(false);
+    
+    // Show results panel gracefully on mobile
+    const resultsPanel = document.getElementById('results-panel');
+    if (resultsPanel) {
+        resultsPanel.classList.remove('hidden');
+        // trigger reflow for smooth animation
+        void resultsPanel.offsetWidth;
+        resultsPanel.classList.remove('opacity-0', 'translate-y-10');
+        resultsPanel.classList.add('opacity-100', 'translate-y-0');
+        // smooth scroll down to results on small screens
+        if (window.innerWidth < 768) {
+            setTimeout(() => resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+        }
+    }
 }
 
 // ─── Update Results UI ────────────────────────────────────────────────────────
@@ -273,6 +384,7 @@ function updateUI(oldLen, newLen) {
 
     switchTab('avail');
     document.getElementById('verify-btn').disabled = (resultAvailable.length === 0);
+    document.getElementById('split-btn').disabled = (resultAvailable.length === 0);
 }
 
 // ─── Tab Switching ────────────────────────────────────────────────────────────
@@ -352,7 +464,7 @@ async function handleMasterUpload(event) {
     event.target.value = '';
 }
 
-// ─── Export Functions ─────────────────────────────────────────────────────────
+// ─── Export & Verify ─────────────────────────────────────────────────────────
 async function copyToClipboard() {
     const list = getActiveList();
     if (!list.length) { showAlert('Info', 'No results to copy.'); return; }
@@ -373,7 +485,8 @@ function saveTXT() {
 function saveExcel() {
     const list = getActiveList();
     if (!list.length) { showAlert('Info', 'No results to save.'); return; }
-    const ws = XLSX.utils.json_to_sheet(list.map((n, i) => ({ '#': i + 1, Numbers: n })));
+    // No # counting as requested
+    const ws = XLSX.utils.json_to_sheet(list.map((n) => ({ Numbers: n })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Results');
     XLSX.writeFile(wb, 'extracted_numbers.xlsx');
@@ -442,5 +555,96 @@ function showLoading(show, text="Processing...") {
     }
 }
 
+// ─── Split Feature ────────────────────────────────────────────────────────────
+function openSplitModal() {
+    const modal = document.getElementById('split-modal');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+        modal.classList.remove('opacity-0');
+        modal.firstElementChild.classList.remove('scale-95');
+    });
+}
+
+function closeSplitModal() {
+    const modal = document.getElementById('split-modal');
+    modal.classList.remove('opacity-100');
+    modal.classList.add('opacity-0');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+// ─── Help Modal ──────────────────────────────────────────────────────────────
+function openHelpModal() {
+    const modal = document.getElementById('help-modal');
+    modal.classList.remove('hidden');
+    // trigger reflow
+    void modal.offsetWidth;
+    modal.classList.remove('opacity-0');
+    modal.classList.add('opacity-100');
+}
+
+function closeHelpModal() {
+    const modal = document.getElementById('help-modal');
+    modal.classList.remove('opacity-100');
+    modal.classList.add('opacity-0');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+async function executeSplit() {
+    const parts = parseInt(document.getElementById('split-parts').value);
+    if (isNaN(parts) || parts < 2) {
+        showAlert('Error', 'Please enter a valid number of parts (minimum 2).');
+        return;
+    }
+
+    const list = getActiveList();
+    if (list.length === 0) {
+        showAlert('Error', 'No data to split.');
+        return;
+    }
+
+    const chunkSize = Math.floor(list.length / parts);
+    const remainder = list.length % parts;
+
+    closeSplitModal();
+    showLoading(true, "Generating split files...");
+
+    let idx = 0;
+    for (let i = 0; i < parts; i++) {
+        const size = chunkSize + (i < remainder ? 1 : 0);
+        const chunk = list.slice(idx, idx + size);
+        idx += size;
+        
+        const blob = new Blob([chunk.join('\n')], { type: 'text/plain' });
+        downloadBlob(blob, `split_part_${i + 1}.txt`);
+        
+        await new Promise(r => setTimeout(r, 200));
+    }
+
+    showLoading(false);
+    showAlert('Success', `Successfully downloaded ${parts} files!`);
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 toggleUI();
+
+window.addEventListener('load', () => {
+    // Theme persistence check
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        const icon = document.getElementById('theme-icon');
+        if(icon) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+    }
+
+    // Elegant splash screen dismissal (shortened per request)
+    setTimeout(() => {
+        const loader = document.getElementById('initial-loader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 700);
+        }
+    }, 400); // 0.4s initial splash display
+});
